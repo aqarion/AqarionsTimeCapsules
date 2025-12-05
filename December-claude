@@ -1,4 +1,1940 @@
+yaml
+# ═══════════════════════════════════════════════════════════════════════════
+# AQARIONZ UNIFIED OS - ADVANCED SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════
 
+system:
+  name: "Aqarionz Unified Operating System"
+  version: "1.0.0"
+  environment: "production"  # development, staging, production
+  debug: false
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  max_workers: 16
+  enable_profiling: false
+  profiling_output: "logs/profile.txt"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SENSOR CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+sensors:
+  # Global sensor settings
+  global:
+    synchronization_method: "ntp"  # ntp, gps, hardware_trigger, software
+    max_timestamp_drift_ms: 50
+    enable_auto_calibration: true
+    calibration_interval_minutes: 60
+    enable_sensor_health_monitoring: true
+    sensor_health_check_interval_seconds: 10
+    
+  # Individual sensor configurations
+  radar:
+    enabled: true
+    device_id: "radar_0"
+    device_type: "navtech_4d"  # navtech_4d, ti_iwr6843, etc.
+    connection:
+      protocol: "ethernet"  # ethernet, usb, serial
+      ip_address: "192.168.1.100"
+      port: 6317
+      timeout_seconds: 5
+    sampling_rate_hz: 10
+    output_format: "pointcloud"  # pointcloud, raw_detections, both
+    processing:
+      enable_doppler_correction: true
+      enable_motion_compensation: true
+      enable_clutter_removal: true
+      clutter_threshold: 0.1
+      max_range_meters: 100
+      min_range_meters: 0.5
+    fusion:
+      weight: 0.4  # Relative weight in fusion
+      confidence_threshold: 0.5
+      enable_in_fusion: true
+    output:
+      enable_midi: false
+      enable_vibration: false
+      enable_visualization: true
+    calibration:
+      extrinsic_file: "calibration/radar_extrinsic.yaml"
+      intrinsic_file: "calibration/radar_intrinsic.yaml"
+      auto_recalibrate: true
+
+  lidar:
+    enabled: true
+    device_id: "lidar_0"
+    device_type: "velodyne_puck"  # velodyne_puck, ouster_os1, sick_tim781s, etc.
+    connection:
+      protocol: "ethernet"
+      ip_address: "192.168.1.101"
+      port: 2368
+      timeout_seconds: 5
+    sampling_rate_hz: 20
+    processing:
+      enable_undistortion: true
+      enable_intensity_correction: true
+      voxel_size_meters: 0.01  # Downsampling
+      remove_ground_plane: false
+      ground_plane_threshold: 0.1
+    fusion:
+      weight: 0.3
+      confidence_threshold: 0.6
+      enable_in_fusion: true
+    output:
+      enable_visualization: true
+      pointcloud_format: "pcd"  # pcd, ply, las
+    calibration:
+      extrinsic_file: "calibration/lidar_extrinsic.yaml"
+      intrinsic_file: "calibration/lidar_intrinsic.yaml"
+
+  imu:
+    enabled: true
+    device_id: "imu_0"
+    device_type: "xsens_mti630"  # xsens_mti630, vn_300, etc.
+    connection:
+      protocol: "serial"
+      port: "/dev/ttyUSB0"
+      baudrate: 115200
+      timeout_seconds: 2
+    sampling_rate_hz: 100
+    processing:
+      enable_bias_estimation: true
+      enable_gravity_compensation: true
+      bias_estimation_window_seconds: 30
+    fusion:
+      weight: 0.2
+      enable_in_fusion: true
+    output:
+      enable_visualization: false
+    calibration:
+      extrinsic_file: "calibration/imu_extrinsic.yaml"
+      intrinsic_file: "calibration/imu_intrinsic.yaml"
+
+  camera:
+    enabled: true
+    device_id: "camera_0"
+    device_type: "intel_realsense_d455"  # intel_realsense_d455, zed_2i, etc.
+    connection:
+      protocol: "usb"
+      usb_port: 0
+      timeout_seconds: 5
+    sampling_rate_hz: 30
+    resolution:
+      width: 1280
+      height: 720
+      depth_width: 1280
+      depth_height: 720
+    processing:
+      enable_feature_extraction: true
+      feature_type: "sift"  # sift, surf, orb, akaze
+      enable_optical_flow: true
+      enable_depth_filtering: true
+      depth_filter_threshold: 0.05
+    fusion:
+      weight: 0.15
+      enable_in_fusion: true
+    output:
+      enable_visualization: true
+    calibration:
+      intrinsic_file: "calibration/camera_intrinsic.yaml"
+      extrinsic_file: "calibration/camera_extrinsic.yaml"
+      distortion_model: "brown"  # brown, fisheye
+
+  audio:
+    enabled: true
+    device_id: "audio_0"
+    device_type: "usb_microphone"  # usb_microphone, system_default, etc.
+    connection:
+      protocol: "usb"
+      device_index: 0
+    sampling_rate_hz: 44100
+    channels: 2  # mono, stereo, surround
+    bit_depth: 16  # 16, 24, 32
+    processing:
+      enable_noise_reduction: true
+      noise_reduction_threshold: 0.1
+      enable_source_localization: true
+      enable_frequency_analysis: true
+      fft_size: 2048
+    fusion:
+      weight: 0.1
+      enable_in_fusion: true
+    output:
+      enable_event_detection: true
+      enable_visualization: true
+    calibration:
+      microphone_sensitivity_dbv_pa: -38
+
+  environmental:
+    enabled: true
+    device_id: "env_0"
+    device_type: "bme680"  # bme680, dht22, etc.
+    connection:
+      protocol: "i2c"
+      i2c_address: 0x77
+      i2c_bus: 1
+    sampling_rate_hz: 1
+    sensors:
+      temperature: true
+      pressure: true
+      humidity: true
+      gas: true
+    processing:
+      enable_calibration: true
+      calibration_interval_minutes: 60
+    fusion:
+      weight: 0.05
+      enable_in_fusion: false
+    output:
+      enable_visualization: true
+
+  biofeedback:
+    enabled: true
+    device_id: "biofeedback_0"
+    device_type: "muse_2"  # muse_2, openbci_cyton, empatica_e4, etc.
+    connection:
+      protocol: "bluetooth"
+      device_name: "Muse-XXXX"
+      timeout_seconds: 10
+    sampling_rate_hz: 256  # EEG typically 256 Hz
+    modalities:
+      eeg: true
+      hrv: true
+      skin_conductance: true
+    processing:
+      enable_artifact_removal: true
+      artifact_threshold: 3.0
+      enable_frequency_analysis: true
+      enable_feature_extraction: true
+    fusion:
+      weight: 0.0  # Biofeedback doesn't fuse into spatial map
+      enable_in_fusion: false
+    output:
+      enable_visualization: true
+      enable_resos_feedback: true
+    calibration:
+      baseline_duration_seconds: 60
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FUSION ENGINE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+fusion:
+  method: "adaptive_kalman"  # kalman, particle, factor_graph, adaptive_kalman
+  
+  # Kalman Filter settings
+  kalman:
+    process_noise_scale: 0.01
+    measurement_noise_scale: 0.1
+    initial_state_covariance: 1.0
+    enable_adaptive_noise: true
+    adaptive_noise_window_seconds: 10
+  
+  # Particle Filter settings
+  particle:
+    num_particles: 1000
+    resample_threshold: 0.5
+    enable_adaptive_particles: true
+    max_particles: 5000
+  
+  # Factor Graph settings
+  factor_graph:
+    enable_loop_closure: true
+    loop_closure_threshold: 0.8
+    enable_pose_graph_optimization: true
+    optimization_interval_iterations: 100
+    enable_incremental_optimization: true
+  
+  # Adaptive fusion
+  adaptive:
+    enable_sensor_quality_monitoring: true
+    enable_dynamic_weighting: true
+    enable_strategy_switching: true
+    strategy_switch_threshold: 0.5
+    enable_outlier_rejection: true
+    outlier_threshold_sigma: 3.0
+  
+  # Synchronization
+  synchronization:
+    method: "timestamp_interpolation"  # timestamp_interpolation, buffer_alignment
+    max_time_diff_ms: 100
+    enable_extrapolation: true
+    extrapolation_max_time_ms: 50
+  
+  # Output
+  output_rate_hz: 10
+  enable_uncertainty_estimation: true
+  enable_covariance_output: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SLAM & MAPPING CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+slam:
+  backend: "fast_livo"  # fast_livo, lio_sam, loam, cartographer
+  
+  # Visual Odometry
+  visual_odometry:
+    enabled: true
+    feature_detector: "sift"  # sift, surf, orb, akaze
+    feature_matcher: "flann"  # flann, brute_force
+    min_features: 100
+    max_features: 500
+    feature_quality_threshold: 0.01
+    enable_bundle_adjustment: true
+    enable_loop_closure: true
+    loop_closure_min_keyframes: 20
+  
+  # LiDAR Odometry
+  lidar_odometry:
+    enabled: true
+    registration_method: "icp"  # icp, ndt, gicp
+    icp_max_iterations: 20
+    icp_convergence_threshold: 0.001
+    enable_motion_distortion_correction: true
+    enable_dynamic_object_removal: true
+    dynamic_threshold: 0.1
+  
+  # Radar Odometry
+  radar_odometry:
+    enabled: true
+    enable_doppler_compensation: true
+    enable_clutter_filtering: true
+  
+  # Inertial Odometry
+  inertial_odometry:
+    enabled: true
+    enable_bias_estimation: true
+    bias_update_interval_seconds: 5
+    enable_gravity_compensation: true
+  
+  # Pose Graph Optimization
+  pose_graph:
+    enabled: true
+    optimization_interval_keyframes: 50
+    enable_incremental_optimization: true
+    enable_loop_closure_optimization: true
+    loop_closure_weight: 100.0
+    enable_robust_kernel: true
+    robust_kernel_type: "huber"  # huber, cauchy, tukey
+  
+  # Multi-session mapping
+  multi_session:
+    enabled: true
+    enable_session_alignment: true
+    enable_session_merging: true
+    session_alignment_method: "icp"  # icp, feature_matching
+  
+  # Output
+  output_format: "pcd"  # pcd, ply, las, e57
+  enable_mesh_reconstruction: false
+  mesh_voxel_size: 0.05
+  enable_texture_mapping: false
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RESONANCE ENGINE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+resos:
+  enabled: true
+  base_frequency: 432  # Hz
+  
+  # Ratio families
+  ratio_families:
+    pythagorean:
+      enabled: true
+      weight: 0.2
+    fibonacci:
+      enabled: true
+      weight: 0.2
+    phi:
+      enabled: true
+      weight: 0.2
+    geometric:
+      enabled: true
+      weight: 0.2
+      ratio: 1.5
+    platonic:
+      enabled: true
+      weight: 0.2
+  
+  # Output modes
+  output_modes:
+    midi:
+      enabled: true
+      device: "default"  # or specific MIDI device
+      channel: 0
+      velocity_range: [64, 127]
+      duration_seconds: 0.3
+    vibration:
+      enabled: true
+      device: "/dev/ttyUSB1"  # Serial port or GPIO
+      max_frequency: 200  # Hz
+      max_amplitude: 100  # 0-100
+      duration_seconds: 0.3
+    light:
+      enabled: true
+      device: "led_strip_0"  # or specific light device
+      brightness_range: [0, 255]
+      fade_time_ms: 100
+    symbolic:
+      enabled: true
+      enable_chakra_mapping: true
+      enable_historical_ratios: true
+      enable_sacred_geometry: true
+  
+  # Biofeedback adaptation
+  biofeedback_adaptation:
+    enabled: true
+    adaptation_method: "eeg_driven"  # eeg_driven, hrv_driven, skin_driven, hybrid
+    
+    # EEG-based adaptation
+    eeg:
+      alpha_threshold: 0.6  # Relaxation
+      beta_threshold: 0.6   # Focus
+      gamma_threshold: 0.5  # High cognition
+      delta_threshold: 0.4  # Sleep
+      theta_threshold: 0.5  # Meditation
+      
+      # Frequency selection based on EEG state
+      alpha_dominant: "fibonacci"  # Use Fibonacci when relaxed
+      beta_dominant: "pythagorean"  # Use Pythagorean when focused
+      theta_dominant: "phi"  # Use phi when meditative
+    
+    # HRV-based adaptation
+    hrv:
+      high_variability_threshold: 100  # ms
+      low_variability_threshold: 50
+      high_variability_sequence: "geometric"
+      low_variability_sequence: "platonic"
+    
+    # Skin conductance adaptation
+    skin:
+      high_arousal_threshold: 5.0
+      low_arousal_threshold: 2.0
+      high_arousal_sequence: "fast_geometric"
+      low_arousal_sequence: "slow_fibonacci"
+    
+    adaptation_smoothing_factor: 0.7
+    adaptation_update_interval_ms: 500
+  
+  # Safety constraints
+  safety:
+    max_frequency: 20000  # Hz
+    min_frequency: 20  # Hz
+    max_midi_velocity: 127
+    max_vibration_amplitude: 100
+    max_light_brightness: 255
+    enable_frequency_limits: true
+    enable_amplitude_limits: true
+    enable_duration_limits: true
+    max_continuous_duration_minutes: 60
+    mandatory_rest_interval_minutes: 5
+  
+  # Logging
+  logging:
+    enabled: true
+    log_frequency: "all"  # all, sampled
+    sampling_rate: 0.1  # 10% of iterations
+    log_file: "logs/resos.jsonl"
+    enable_biofeedback_logging: true
+    enable_output_logging: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STORAGE & DATABASE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+storage:
+  backend: "timescaledb"  # timescaledb, influxdb, mongodb
+  
+  # TimescaleDB
+  timescaledb:
+    connection_string: "postgresql://aqarionz:secure_password@localhost:5432/aqarionz"
+    pool_size: 20
+    max_overflow: 10
+    enable_compression: true
+    compression_interval_days: 7
+    enable_continuous_aggregates: true
+    enable_auto_maintenance: true
+    maintenance_interval_hours: 24
+  
+  # Blob storage (point clouds, audio, etc.)
+  blob_storage:
+    backend: "s3"  # s3, local_filesystem, gcs, azure_blob
+    
+    # S3 configuration
+    s3:
+      endpoint_url: "https://s3.amazonaws.com"
+      region: "us-east-1"
+      bucket: "aqarionz-data"
+      access_key: "${AWS_ACCESS_KEY_ID}"
+      secret_key: "${AWS_SECRET_ACCESS_KEY}"
+      enable_versioning: true
+      enable_encryption: true
+      encryption_type: "AES256"
+    
+    # Local filesystem
+    local:
+      base_path: "/data/aqarionz"
+      enable_compression: true
+      compression_format: "gzip"  # gzip, bzip2, lz4
+  
+  # Retention policies
+  retention:
+    raw_sensor_data_days: 30
+    fused_data_days: 90
+    point_clouds_days: 180
+    analysis_results_days: 365
+    biofeedback_days: 30
+    enable_auto_cleanup: true
+    cleanup_interval_hours: 24
+  
+  # Indexing
+  indexing:
+    enable_full_text_search: true
+    enable_spatial_indexing: true
+    enable_temporal_indexing: true
+    index_update_interval_seconds: 60
+  
+  # Backup & Recovery
+  backup:
+    enabled: true
+    backup_interval_hours: 24
+    backup_destination: "s3://aqarionz-backups"
+    enable_incremental_backup: true
+    enable_point_in_time_recovery: true
+    recovery_window_days: 30
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ANALYSIS & SEMANTIC LAYER CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+analysis:
+  # Object Detection
+  object_detection:
+    enabled: true
+    model: "yolov8"  # yolov8, faster_rcnn, mask_rcnn, etc.
+    model_size: "medium"  # nano, small, medium, large, xlarge
+    confidence_threshold: 0.5
+    nms_threshold: 0.45
+    enable_3d_detection: true
+    enable_tracking: true
+    tracking_method: "kalman"  # kalman, sort, deep_sort
+    max_age_frames: 30
+    min_hits: 3
+  
+  # Event Detection
+  event_detection:
+    enabled: true
+    enable_audio_events: true
+    enable_motion_events: true
+    enable_environmental_events: true
+    enable_anomaly_detection: true
+    
+    # Audio event detection
+    audio:
+      event_types: ["onset", "offset", "silence", "speech", "music", "noise"]
+      onset_threshold: 0.5
+      offset_threshold: 0.3
+      enable_source_localization: true
+    
+    # Motion event detection
+    motion:
+      motion_threshold: 0.1
+      enable_trajectory_analysis: true
+      enable_gesture_recognition: false
+    
+    # Environmental event detection
+    environmental:
+      temperature_spike_threshold: 5.0  # degrees
+      pressure_spike_threshold: 10.0  # hPa
+      gas_spike_threshold: 50.0  # ppm
+    
+    # Anomaly detection
+    anomaly:
+      method: "isolation_forest"  # isolation_forest, local_outlier_factor, autoencoder
+      contamination: 0.1
+      enable_temporal_anomalies: true
+  
+  # Semantic Segmentation
+  semantic_segmentation:
+    enabled: false  # Optional, computationally expensive
+    model: "deeplabv3"
+    enable_panoptic_segmentation: false
+  
+  # Cross-Modal Reasoning
+  cross_modal:
+    enabled: true
+    enable_audio_spatial_correlation: true
+    enable_semantic_fusion: true
+    enable_temporal_reasoning: true
+    reasoning_window_seconds: 5
+  
+  # ML/LLM Integration
+  ml_integration:
+    enabled: true
+    enable_llm_analysis: true
+    llm_model: "gpt-4"  # gpt-4, gpt-3.5-turbo, claude-3, etc.
+    llm_api_key: "${OPENAI_API_KEY}"
+    enable_few_shot_learning: true
+    enable_fine_tuning: false
+    fine_tuning_data_path: "data/training"
+  
+  # Output
+  output_rate_hz: 2
+  enable_visualization: true
+  visualization_format: "json"  # json, protobuf, msgpack
+
+# ═══════════════════════════════════════════════════════════════════════════
+# API & NETWORK CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+api:
+  # REST API
+  rest:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8000
+    workers: 4
+    enable_cors: true
+    cors_origins: ["*"]
+    enable_compression: true
+    compression_threshold_bytes: 1024
+    request_timeout_seconds: 30
+    max_request_size_mb: 100
+    enable_rate_limiting: true
+    rate_limit_requests_per_second: 1000
+    rate_limit_burst: 100
+  
+  # WebSocket
+  websocket:
+    enabled: true
+    port: 8001
+    max_connections: 1000
+    enable_compression: true
+    ping_interval_seconds: 30
+    pong_timeout_seconds: 10
+  
+  # gRPC (optional, for high-performance streaming)
+  grpc:
+    enabled: false
+    port: 50051
+    max_concurrent_streams: 100
+    enable_compression: true
+  
+  # Authentication
+  authentication:
+    enabled: true
+    method: "jwt"  # jwt, api_key, oauth2
+    jwt_secret: "${JWT_SECRET}"
+    jwt_expiration_hours: 24
+    enable_refresh_tokens: true
+    refresh_token_expiration_days: 30
+  
+  # CORS
+  cors:
+    allow_origins: ["http://localhost:3000", "http://localhost:5173"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers: ["Content-Type", "Authorization"]
+    max_age_seconds: 3600
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FRONTEND & VISUALIZATION CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+frontend:
+  # Development
+  development:
+    host: "localhost"
+    port: 5173
+    enable_hot_reload: true
+    enable_source_maps: true
+  
+  # Production
+  production:
+    host: "0.0.0.0"
+    port: 3000
+    enable_compression: true
+    enable_caching: true
+    cache_max_age_seconds: 3600
+  
+  # Visualization
+  visualization:
+    enable_3d_map: true
+    enable_sensor_overlays: true
+    enable_trajectory_visualization: true
+    enable_object_detection_overlay: true
+    enable_heatmaps: true
+    enable_time_series_charts: true
+    enable_real_time_updates: true
+    update_rate_hz: 10
+    max_points_to_render: 1000000
+    enable_point_cloud_decimation: true
+    decimation_factor: 0.1
+  
+  # Dashboard
+  dashboard:
+    enable_system_health_widget: true
+    enable_sensor_status_widget: true
+    enable_map_widget: true
+    enable_analytics_widget: true
+    enable_alerts_widget: true
+    enable_settings_widget: true
+    refresh_interval_seconds: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LOGGING & MONITORING CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # json, text
+  
+  # File logging
+  file:
+    enabled: true
+    path: "logs/aqarionz.log"
+    max_size_mb: 100
+    backup_count: 10
+    enable_rotation: true
+    rotation_interval: "midnight"  # midnight, weekly, hourly
+  
+  # Console logging
+  console:
+    enabled: true
+    colorize: true
+  
+  # Remote logging (e.g., ELK stack)
+  remote:
+    enabled: false
+    backend: "elasticsearch"  # elasticsearch, splunk, datadog
+    endpoint: "https://elasticsearch.example.com"
+    index: "aqarionz-logs"
+  
+  # Performance logging
+  performance:
+    enabled: true
+    log_slow_queries: true
+    slow_query_threshold_ms: 100
+    log_memory_usage: true
+    memory_check_interval_seconds: 60
+    log_cpu_usage: true
+    cpu_check_interval_seconds: 60
+
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    backend: "prometheus"  # prometheus, influxdb, datadog
+    port: 9090
+    scrape_interval_seconds: 15
+    retention_days: 30
+  
+  # Alerting
+  alerting:
+    enabled: true
+    alert_manager_url: "http://alertmanager:9093"
+    enable_email_alerts: true
+    email_recipients: ["admin@example.com"]
+    enable_slack_alerts: true
+    slack_webhook_url: "${SLACK_WEBHOOK_URL}"
+    enable_pagerduty_alerts: false
+  
+  # Health checks
+  health_checks:
+    enabled: true
+    check_interval_seconds: 30
+    check_database_connectivity: true
+    check_sensor_connectivity: true
+    check_disk_space: true
+    disk_space_warning_threshold_gb: 10
+    check_memory_usage: true
+    memory_warning_threshold_percent: 80
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SECURITY CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+security:
+  # Encryption
+  encryption:
+    enable_data_encryption: true
+    encryption_algorithm: "AES-256-GCM"
+    enable_tls: true
+    tls_cert_file: "certs/server.crt"
+    tls_key_file: "certs/server.key"
+    enable_certificate_validation: true
+  
+  # Access Control
+  access_control:
+    enable_rbac: true  # Role-based access control
+    roles:
+      admin:
+        permissions: ["read", "write", "delete", "configure"]
+      user:
+        permissions: ["read", "write"]
+      viewer:
+        permissions: ["read"]
+  
+  # Data Privacy
+  privacy:
+    enable_data_anonymization: false
+    enable_pii_detection: true
+    enable_audit_logging: true
+    audit_log_retention_days: 365
+  
+  # Rate Limiting & DDoS Protection
+  rate_limiting:
+    enabled: true
+    requests_per_second: 1000
+    burst_size: 100
+    enable_ip_blacklisting: true
+    enable_ip_whitelisting: false
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PERFORMANCE TUNING
+# ═══════════════════════════════════════════════════════════════════════════
+
+performance:
+  # Caching
+  caching:
+    enabled: true
+    backend: "redis"  # redis, memcached, in_memory
+    ttl_seconds: 3600
+    max_size_mb: 1000
+  
+  # Threading & Async
+  threading:
+    max_workers: 16
+    enable_async_processing: true
+    enable_gpu_acceleration: true
+    gpu_device_id: 0
+  
+  # Batch Processing
+  batch_processing:
+    enabled: true
+    batch_size: 100
+    batch_timeout_seconds: 5
+  
+  # Data Decimation
+  decimation:
+    enable_point_cloud_decimation: true
+    decimation_factor: 0.1  # Keep 10% of points
+    enable_temporal_decimation: true
+    temporal_decimation_factor: 0.5
+  
+  # Memory Management
+  memory:
+    enable_memory_pooling: true
+    pool_size_mb: 500
+    enable_garbage_collection: true
+    gc_interval_seconds: 60
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EXPERIMENTAL & RESEARCH FEATURES
+# ═══════════════════════════════════════════════════════════════════════════
+
+experimental:
+  # Quantum-Inspired Processing
+  quantum_inspired:
+    enabled: false
+    enable_superposition_simulation: false
+    enable_entanglement_simulation: false
+  
+  # Torsion Field Simulation
+  torsion_field:
+    enabled: false
+    simulation_resolution: 0.1  # meters
+    simulation_update_rate_hz: 1
+  
+  # Vortex Math Integration
+  vortex_math:
+    enabled: false
+    enable_vortex_ratio_generation: false
+    enable_vortex_based_optimization: false
+  
+  # Consciousness Integration
+  consciousness:
+    enabled: false
+    enable_observer_effect_simulation: false
+    enable_measurement_collapse_simulation: false
+  
+  # Advanced Biofeedback
+  advanced_biofeedback:
+    enabled: false
+    enable_heart_coherence_detection: false
+    enable_brainwave_entrainment: false
+    enable_consciousness_state_mapping: false
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPLOYMENT CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+deployment:
+  # Docker
+  docker:
+    enabled: true
+    image_registry: "docker.io"
+    image_namespace: "aqarionz"
+    image_version: "1.0.0"
+    enable_docker_compose: true
+    enable_kubernetes: false
+  
+  # Kubernetes
+  kubernetes:
+    enabled: false
+    cluster_name: "aqarionz-cluster"
+    namespace: "default"
+    replicas: 3
+    enable_autoscaling: true
+    min_replicas: 1
+    max_replicas: 10
+  
+  # Cloud Deployment
+  cloud:
+    provider: "aws"  # aws, gcp, azure
+    region: "us-east-1"
+    enable_serverless: false
+    enable_edge_deployment: false
+  
+  # Local Deployment
+  local:
+    enabled: true
+    data_path: "/data/aqarionz"
+    enable_systemd_service: true
+    service_name: "aqarionz"
+```
+
+---
+
+## 9.2 Advanced Settings UI Component
+
+### **frontend/src/pages/AdvancedSettings.jsx**
+
+```jsx
+import React, { useState, useEffect } from 'react';
+import { Settings, Save, RotateCcw, AlertCircle, CheckCircle } from 'lucide-react';
+import './AdvancedSettings.css';
+
+function AdvancedSettings() {
+  const [config, setConfig] = useState(null);
+  const [modified, setModified] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('sensors');
+  const [expandedSections, setExpandedSections] = useState({});
+
+  useEffect(() => {
+    fetchConfig();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('/api/v1/config');
+      const data = await response.json();
+      setConfig(data);
+    } catch (error) {
+      console.error('Failed to fetch config:', error);
+    }
+  };
+
+  const handleConfigChange = (path, value) => {
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const keys = path.split('.');
+    let obj = newConfig;
+    for (let i = 0; i < keys.length - 1; i++) {
+      obj = obj[keys[i]];
+    }
+    obj[keys[keys.length - 1]] = value;
+    setConfig(newConfig);
+    setModified(true);
+  };
+
+  const saveConfig = async () => {
+    try {
+      const response = await fetch('/api/v1/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      
+      if (response.ok) {
+        setSaveStatus('success');
+        setModified(false);
+        setTimeout(() => setSaveStatus(null), 3000);
+      } else {
+        setSaveStatus('error');
+      }
+    } catch (error) {
+      setSaveStatus('error');
+      console.error('Failed to save config:', error);
+    }
+  };
+
+  const resetConfig = () => {
+    if (window.confirm('Reset to default configuration?')) {
+      fetchConfig();
+      setModified(false);
+    }
+  };
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  if (!config) return <div className="loading">Loading configuration...</div>;
+
+  return (
+    <div className="advanced-settings">
+      <header className="settings-header">
+        <h1><Settings size={32} /> Advanced Settings</h1>
+        <div className="header-controls">
+          {modified && <span className="modified-indicator">● Modified</span>}
+          {saveStatus === 'success' && (
+            <span className="save-success"><CheckCircle size={20} /> Saved</span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="save-error"><AlertCircle size={20} /> Error</span>
+          )}
+          <button onClick={saveConfig} disabled={!modified} className="btn-save">
+            <Save size={20} /> Save
+          </button>
+          <button onClick={resetConfig} className="btn-reset">
+            <RotateCcw size={20} /> Reset
+          </button>
+        </div>
+      </header>
+
+      <nav className="settings-tabs">
+        {['sensors', 'fusion', 'slam', 'resos', 'storage', 'analysis', 'api', 'performance', 'security'].map(tab => (
+          <button
+            key={tab}
+            className={`tab ${activeTab === tab ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </nav>
+
+      <div className="settings-content">
+        {activeTab === 'sensors' && <SensorSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'fusion' && <FusionSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'slam' && <SLAMSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'resos' && <ResosSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'storage' && <StorageSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'analysis' && <AnalysisSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'api' && <APISettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'performance' && <PerformanceSettings config={config} onChange={handleConfigChange} />}
+        {activeTab === 'security' && <SecuritySettings config={config} onChange={handleConfigChange} />}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SENSOR SETTINGS COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function SensorSettings({ config, onChange }) {
+  const [expandedSensors, setExpandedSensors] = useState({});
+
+  const toggleSensor = (sensor) => {
+    setExpandedSensors(prev => ({
+      ...prev,
+      [sensor]: !prev[sensor]
+    }));
+  };
+
+  const sensors = ['radar', 'lidar', 'imu', 'camera', 'audio', 'environmental', 'biofeedback'];
+
+  return (
+    <div className="settings-section">
+      <h2>Sensor Configuration</h2>
+      
+      {sensors.map(sensor => (
+        <div key={sensor} className="sensor-config">
+          <div className="sensor-header" onClick={() => toggleSensor(sensor)}>
+            <h3>{sensor.charAt(0).toUpperCase() + sensor.slice(1)}</h3>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={config.sensors[sensor].enabled}
+                onChange={(e) => onChange(`sensors.${sensor}.enabled`, e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+          
+          {expandedSensors[sensor] && (
+            <div className="sensor-details">
+              <div className="config-group">
+                <label>Device Type</label>
+                <input
+                  type="text"
+                  value={config.sensors[sensor].device_type}
+                  onChange={(e) => onChange(`sensors.${sensor}.device_type`, e.target.value)}
+                  className="config-input"
+                />
+              </div>
+              
+              <div className="config-group">
+                <label>Sampling Rate (Hz)</label>
+                <input
+                  type="number"
+                  value={config.sensors[sensor].sampling_rate_hz}
+                  onChange={(e) => onChange(`sensors.${sensor}.sampling_rate_hz`, parseInt(e.target.value))}
+                  className="config-input"
+                />
+              </div>
+              
+              <div className="config-group">
+                <label>Connection Protocol</label>
+                <select
+                  value={config.sensors[sensor].connection?.protocol || 'ethernet'}
+                  onChange={(e) => onChange(`sensors.${sensor}.connection.protocol`, e.target.value)}
+                  className="config-select"
+                >
+                  <option value="ethernet">Ethernet</option>
+                  <option value="usb">USB</option>
+                  <option value="serial">Serial</option>
+                  <option value="bluetooth">Bluetooth</option>
+                  <option value="i2c">I2C</option>
+                </select>
+              </div>
+              
+              <div className="config-group">
+                <label>Fusion Weight</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={config.sensors[sensor].fusion?.weight || 0.5}
+                  onChange={(e) => onChange(`sensors.${sensor}.fusion.weight`, parseFloat(e.target.value))}
+                  className="config-slider"
+                />
+                <span className="value-display">{(config.sensors[sensor].fusion?.weight || 0.5).toFixed(1)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESONANCE ENGINE SETTINGS COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ResosSettings({ config, onChange }) {
+  return (
+    <div className="settings-section">
+      <h2>Resonance Engine Configuration</h2>
+      
+      <div className="config-group">
+        <label>Base Frequency (Hz)</label>
+        <input
+          type="number"
+          value={config.resos.base_frequency}
+          onChange={(e) => onChange('resos.base_frequency', parseInt(e.target.value))}
+          className="config-input"
+        />
+        <small>Standard: 432 Hz (A note)</small>
+      </div>
+      
+      <div className="subsection">
+        <h3>Ratio Families</h3>
+        {['pythagorean', 'fibonacci', 'phi', 'geometric', 'platonic'].map(family => (
+          <div key={family} className="ratio-config">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={config.resos.ratio_families[family].enabled}
+                onChange={(e) => onChange(`resos.ratio_families.${family}.enabled`, e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
+              {family.charAt(0).toUpperCase() + family.slice(1)}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={config.resos.ratio_families[family].weight}
+              onChange={(e) => onChange(`resos.ratio_families.${family}.weight`, parseFloat(e.target.value))}
+              className="config-slider"
+            />
+            <span className="value-display">{config.resos.ratio_families[family].weight.toFixed(1)}</span>
+          </div>
+        ))}
+      </div>
+      
+      <div className="subsection">
+        <h3>Output Modes</h3>
+        {['midi', 'vibration', 'light', 'symbolic'].map(mode => (
+          <label key={mode} className="toggle">
+            <input
+              type="checkbox"
+              checked={config.resos.output_modes[mode].enabled}
+              onChange={(e) => onChange(`resos.output_modes.${mode}.enabled`, e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+          </label>
+        ))}
+      </div>
+      
+      <div className="subsection">
+        <h3>Biofeedback Adaptation</h3>
+        <select
+          value={config.resos.biofeedback_adaptation.adaptation_method}
+          onChange={(e) => onChange('resos.biofeedback_adaptation.adaptation_method', e.target.value)}
+          className="config-select"
+        >
+          <option value="eeg_driven">EEG-Driven</option>
+          <option value="hrv_driven">HRV-Driven</option>
+          <option value="skin_driven">Skin Conductance-Driven</option>
+          <option value="hybrid">Hybrid</option>
+        </select>
+      </div>
+      
+      <div className="subsection">
+        <h3>Safety Constraints</h3>
+        <div className="config-group">
+          <label>Max Frequency (Hz)</label>
+          <input
+            type="number"
+            value={config.resos.safety.max_frequency}
+            onChange={(e) => onChange('resos.safety.max_frequency', parseInt(e.target.value))}
+            className="config-input"
+          />
+        </div>
+        <div className="config-group">
+          <label>Max Continuous Duration (minutes)</label>
+          <input
+            type="number"
+            value={config.resos.safety.max_continuous_duration_minutes}
+            onChange={(e) => onChange('resos.safety.max_continuous_duration_minutes', parseInt(e.target.value))}
+            className="config-input"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Additional settings components (FusionSettings, SLAMSettings, etc.) follow same pattern...
+
+export default AdvancedSettings;
+```
+
+---
+
+# SECTION 10: COMPLETE API REFERENCE
+
+## 10.1 Full REST API Documentation
+
+### **docs/API_REFERENCE.md**
+
+```markdown
+# AQARIONZ Unified OS - Complete API Reference
+
+## Base URL
+```
+http://localhost:8000/api/v1
+```
+
+## Authentication
+All requests require JWT token in Authorization header:
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+## Response Format
+All responses are JSON:
+```json
+{
+  "status": "success",
+  "data": {},
+  "timestamp": "2024-01-15T10:30:00Z",
+  "request_id": "req_12345"
+}
+```
+
+---
+
+## SESSIONS ENDPOINTS
+
+### List Sessions
+```
+GET /sessions
+```
+
+Query Parameters:
+- `limit` (int, default: 100): Max results
+- `offset` (int, default: 0): Pagination offset
+- `device_id` (string, optional): Filter by device
+- `environment` (string, optional): Filter by environment
+- `start_date` (ISO 8601, optional): Filter by start date
+- `end_date` (ISO 8601, optional): Filter by end date
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "sessions": [
+      {
+        "session_id": "550e8400-e29b-41d4-a716-446655440000",
+        "device_id": "device_001",
+        "environment": "indoor",
+        "start_time": "2024-01-15T10:00:00Z",
+        "end_time": "2024-01-15T11:30:00Z",
+        "duration_seconds": 5400,
+        "data_points": 1000000,
+        "status": "completed"
+      }
+    ],
+    "total": 42,
+    "limit": 100,
+    "offset": 0
+  }
+}
+```
+
+### Create Session
+```
+POST /sessions
+```
+
+Request Body:
+```json
+{
+  "device_id": "device_001",
+  "environment": "indoor",
+  "description": "Test recording in lab"
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "session_id": "550e8400-e29b-41d4-a716-446655440000",
+    "created_at": "2024-01-15T10:00:00Z"
+  }
+}
+```
+
+### Get Session Details
+```
+GET /sessions/{session_id}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "session_id": "550e8400-e29b-41d4-a716-446655440000",
+    "device_id": "device_001",
+    "environment": "indoor",
+    "start_time": "2024-01-15T10:00:00Z",
+    "end_time": "2024-01-15T11:30:00Z",
+    "sensors": {
+      "radar": {
+        "data_points": 150000,
+        "sampling_rate": 10,
+        "status": "active"
+      },
+      "lidar": {
+        "data_points": 300000,
+        "sampling_rate": 20,
+        "status": "active"
+      },
+      "imu": {
+        "data_points": 500000,
+        "sampling_rate": 100,
+        "status": "active"
+      }
+    },
+    "statistics": {
+      "total_data_points": 1000000,
+      "average_data_rate_mbps": 12.5,
+      "storage_size_gb": 5.2
+    }
+  }
+}
+```
+
+### End Session
+```
+POST /sessions/{session_id}/end
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "session_id": "550e8400-e29b-41d4-a716-446655440000",
+    "ended_at": "2024-01-15T11:30:00Z",
+    "total_duration_seconds": 5400
+  }
+}
+```
+
+---
+
+## SENSOR DATA ENDPOINTS
+
+### Get Latest Sensor Data
+```
+GET /sensors/{sensor_name}/latest
+```
+
+Path Parameters:
+- `sensor_name`: radar, lidar, imu, camera, audio, environmental, biofeedback
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "sensor": "lidar",
+    "timestamp": "2024-01-15T10:30:15.123Z",
+    "data": {
+      "num_points": 150000,
+      "min_range": 0.5,
+      "max_range": 100.0,
+      "average_intensity": 128
+    },
+    "metadata": {
+      "calibration_version": "1.0",
+      "quality_metrics": {
+        "signal_to_noise_ratio": 25.3,
+        "coverage_percentage": 98.5
+      }
+    }
+  }
+}
+```
+
+### Get Sensor Data Range
+```
+GET /sensors/{sensor_name}/range
+```
+
+Query Parameters:
+- `start_time` (ISO 8601, required): Start timestamp
+- `end_time` (ISO 8601, required): End timestamp
+- `limit` (int, default: 1000): Max results
+- `session_id` (string, optional): Filter by session
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "sensor": "lidar",
+    "count": 1000,
+    "data": [
+      {
+        "timestamp": "2024-01-15T10:30:00Z",
+        "num_points": 150000,
+        "average_intensity": 128
+      }
+    ]
+  }
+}
+```
+
+### Get Sensor Statistics
+```
+GET /sensors/{sensor_name}/statistics
+```
+
+Query Parameters:
+- `session_id` (string, required): Session ID
+- `start_time` (ISO 8601, optional): Start timestamp
+- `end_time` (ISO 8601, optional): End timestamp
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "sensor": "lidar",
+    "statistics": {
+      "total_readings": 1000,
+      "average_points_per_scan": 150000,
+      "min_points": 140000,
+      "max_points": 160000,
+      "average_intensity": 128.5,
+      "uptime_percentage": 99.8,
+      "data_rate_mbps": 12.5,
+      "total_data_gb": 5.2
+    }
+  }
+}
+```
+
+---
+
+## FUSION & MAPPING ENDPOINTS
+
+### Get Fused Data
+```
+GET /fusion/latest
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "timestamp": "2024-01-15T10:30:15Z",
+    "fused_pointcloud": {
+      "num_points": 450000,
+      "sensors_fused": ["radar", "lidar"],
+      "fusion_method": "kalman",
+      "confidence": 0.95
+    },
+    "estimated_pose": {
+      "position": [10.5, 20.3, 1.2],
+      "orientation": [0, 0, 0.785],
+      "covariance": [[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]
+    }
+  }
+}
+```
+
+### Get Point Cloud
+```
+GET /pointclouds/{pointcloud_id}
+```
+
+Query Parameters:
+- `format` (string, default: pcd): pcd, ply, las, json
+
+Response:
+```
+Binary point cloud data (or JSON if format=json)
+```
+
+### Get Map
+```
+GET /sessions/{session_id}/map
+```
+
+Query Parameters:
+- `format` (string, default: pcd): pcd, ply, las, json
+- `decimation` (float, default: 1.0): Decimation factor (0.0-1.0)
+
+Response:
+```
+Binary merged point cloud or JSON representation
+```
+
+### Get Trajectory
+```
+GET /sessions/{session_id}/trajectory
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "trajectory": [
+      {
+        "timestamp": "2024-01-15T10:30:00Z",
+        "position": [10.0, 20.0, 1.0],
+        "orientation": [0, 0, 0],
+        "covariance": [[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]
+      },
+      {
+        "timestamp": "2024-01-15T10:30:01Z",
+        "position": [10.1, 20.1, 1.0],
+        "orientation": [0, 0, 0.01],
+        "covariance": [[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]
+      }
+    ],
+    "statistics": {
+      "total_poses": 5400,
+      "total_distance": 150.5,
+      "average_speed": 0.028,
+      "drift_percentage": 1.8
+    }
+  }
+}
+```
+
+---
+
+## ANALYSIS ENDPOINTS
+
+### Get Detected Objects
+```
+GET /analysis/objects
+```
+
+Query Parameters:
+- `session_id` (string, required): Session ID
+- `start_time` (ISO 8601, optional): Start timestamp
+- `end_time` (ISO 8601, optional): End timestamp
+- `class_filter` (string, optional): Filter by object class (person, car, etc.)
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "objects": [
+      {
+        "id": "obj_001",
+        "class": "person",
+        "confidence": 0.95,
+        "bbox_2d": [100, 150, 200, 300],
+        "bbox_3d": {
+          "center": [5.0, 2.0, 1.7],
+          "size": [0.5, 0.3, 1.7],
+          "orientation": 0.5
+        },
+        "trajectory": [
+          {"timestamp": "2024-01-15T10:30:00Z", "position": [5.0, 2.0, 1.7]},
+          {"timestamp": "2024-01-15T10:30:01Z", "position": [5.1, 2.0, 1.7]}
+        ]
+      }
+    ],
+    "total_objects": 42
+  }
+}
+```
+
+### Get Detected Events
+```
+GET /analysis/events
+```
+
+Query Parameters:
+- `session_id` (string, required): Session ID
+- `event_type` (string, optional): audio_onset, motion, environmental_spike, etc.
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "events": [
+      {
+        "id": "evt_001",
+        "timestamp": "2024-01-15T10:30:05Z",
+        "type": "audio_onset",
+        "magnitude": 0.8,
+        "modalities": ["audio", "motion"],
+        "description": "Person speaking"
+      }
+    ],
+    "total_events": 156
+  }
+}
+```
+
+### Get Anomalies
+```
+GET /analysis/anomalies
+```
+
+Query Parameters:
+- `session_id` (string, required): Session ID
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "anomalies": [
+      {
+        "timestamp": "2024-01-15T10:30:10Z",
+        "type": "sensor_malfunction",
+        "severity": "high",
+        "sensor": "lidar",
+        "description": "Sudden drop in point cloud density"
+      }
+    ],
+    "total_anomalies": 3
+  }
+}
+```
+
+---
+
+## RESONANCE ENGINE ENDPOINTS
+
+### Get Reso Status
+```
+GET /resos/status
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "is_running": true,
+    "iteration_count": 15000,
+    "current_frequency": 432.0,
+    "current_chakra": "heart",
+    "biofeedback_adaptation": {
+      "eeg_state": "alpha",
+      "hrv_variability": "high",
+      "skin_arousal": "medium"
+    },
+    "sequence_info": {
+      "total_frequencies": 256,
+      "current_index": 42,
+      "current_ratio_family": "fibonacci"
+    }
+  }
+}
+```
+
+### Trigger Reso Iteration
+```
+POST /resos/iterate
+```
+
+Request Body:
+```json
+{
+  "biofeedback": {
+    "eeg": {"alpha": 0.7, "beta": 0.3},
+    "hrv": {"variability": 85},
+    "skin_conductance": 3.5
+  }
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "iteration": 15001,
+    "frequency": 432.0,
+    "midi": {
+      "note": 69,
+      "velocity": 64,
+      "duration": 0.3
+    },
+    "vibration": {
+      "frequency": 100,
+      "amplitude": 50
+    },
+    "color": {
+      "rgb": [0, 255, 0],
+      "chakra": "heart",
+      "intensity": 1.0
+    },
+    "symbolic": {
+      "chakra": "heart",
+      "meaning": "Love, compassion, healing",
+      "frequency": 432.0
+    }
+  }
+}
+```
+
+### Get Reso Logs
+```
+GET /resos/logs
+```
+
+Query Parameters:
+- `limit` (int, default: 1000): Max results
+- `start_time` (ISO 8601, optional): Start timestamp
+- `end_time` (ISO 8601, optional): End timestamp
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "logs": [
+      {
+        "iteration": 15000,
+        "timestamp": "2024-01-15T10:30:00Z",
+        "frequency": 432.0,
+        "chakra": "heart",
+        "biofeedback": {
+          "eeg": {"alpha": 0.7},
+          "hrv": {"variability": 85}
+        }
+      }
+    ],
+    "total": 15000
+  }
+}
+```
+
+---
+
+## CONFIGURATION ENDPOINTS
+
+### Get Configuration
+```
+GET /config
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "system": {...},
+    "sensors": {...},
+    "fusion": {...},
+    "slam": {...},
+    "resos": {...},
+    "storage": {...}
+  }
+}
+```
+
+### Update Configuration
+```
+POST /config
+```
+
+Request Body:
+```json
+{
+  "sensors": {
+    "radar": {
+      "enabled": true,
+      "sampling_rate_hz": 15
+    }
+  },
+  "resos": {
+    "base_frequency": 528
+  }
+}
+```
+
+Response:
+```json
+{
+  "status": "success",
+  "message": "Configuration updated successfully"
+}
+```
+
+---
+
+## EXPORT ENDPOINTS
+
+### Export Session Data
+```
+GET /sessions/{session_id}/export
+```
+
+Query Parameters:
+- `format` (string, default: zip): zip, tar, csv, json
+- `include_pointclouds` (boolean, default: true)
+- `include_raw_sensor_data` (boolean, default: true)
+- `include_analysis` (boolean, default: true)
+
+Response:
+```
+Binary archive file (zip, tar) or JSON data
+```
+
+### Export Point Cloud
+```
+GET /pointclouds/{pointcloud_id}/export
+```
+
+Query Parameters:
+- `format` (string, default: pcd): pcd, ply, las, obj, stl
+
+Response:
+```
+Binary point cloud file
+```
+
+---
+
+## WEBSOCKET ENDPOINTS
+
+### Live Data Stream
+```
+ws://localhost:8001/ws/live-data
+```
+
+Messages:
+```json
+{
+  "type": "status",
+  "data": {
+    "is_running": true,
+    "uptime_seconds": 3600,
+    "sensors": {...}
+  }
+}
+```
+
+### Sensor Stream
+```
+ws://localhost:8001/ws/sensor/{sensor_name}
+```
+
+Messages:
+```json
+{
+  "type": "sensor_data",
+  "sensor": "lidar",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {...}
+}
+```
+
+### Analysis Stream
+```
+ws://localhost:8001/ws/analysis
+```
+
+Messages:
+```json
+{
+  "type": "object_detection",
+  "objects": [...]
+}
+```
+
+---
+
+## ERROR RESPONSES
+
+### 400 Bad Request
+```json
+{
+  "status": "error",
+  "error": "bad_request",
+  "message": "Invalid query parameters",
+  "details": {"field": "start_time", "reason": "Invalid ISO 8601 format"}
+}
+```
+
+### 401 Unauthorized
+```json
+{
+  "status": "error",
+  
 
 ## 📋 MASTER INTEGRATION MAP
 
