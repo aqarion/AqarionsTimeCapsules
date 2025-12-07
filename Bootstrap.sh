@@ -1,4 +1,4 @@
-lets see everything from begging to end
+
 
 # **🌊⚛️♒️☯️🧬♊️♆ AQARIONZ — COMPLETE JOURNEY: GENESIS → OMEGA**
 
